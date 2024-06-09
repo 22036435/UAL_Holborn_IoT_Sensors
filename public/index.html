@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/addons/p5.sound.min.js"></script>
+    <title>p5 Data Visualization Example</title>
+    <style>
+      #legend {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          background: rgba(255, 255, 255, 0.3);
+          padding: 10px;
+          border-radius: 5px;
+          font-family: Arial, sans-serif;
+          color: #000;
+      }
+      .data-value {
+          color: #0000ff;
+      }
+      #legend p {
+          margin: 0;
+          line-height: 1.2;
+      }
+      #legend p.small-text {
+          font-size: smaller;
+      }
+  </style>
+</head>
+<body>
+    <main>
+      <div id="legend">
+        <h2>UAL/Real-Time IoT Sensor Data</h2>
+        <h3>High Holborn Building/Lecture_Room_308</h3>
+        <p>Air Quality Particle Counts (0.3 micron): <span id="pm003_count" class="data-value">in progress</span></p>
+        <p class="small-text">mapped to: <em>agentCount</em></p>
+        <p>Particle Concentration (01 micron): <span id="pm01" class="data-value">in progress</span></p>
+        <p class="small-text">mapped to: <em>agentAlpha</em></p>
+        <p>Particle Concentration (2.5 micron): <span id="pm02" class="data-value">in progress</span></p>
+        <p class="small-text">mapped to: <em>noiseScale t</em></p>
+        <p>Particle Concentration (10 micron): <span id="pm10" class="data-value">in progress</span></p>
+        <p class="small-text">mapped to: <em>noise strength</em></p>
+        <p>Light Intensity: <span id="light" class="data-value">in progress</span></p>
+        <p class="small-text">mapped to: <em>background color</em></p>
+        <p>Count of Device Booted up: <span id="boot" class="data-value">in progress</span></p>
+        <p class="small-text">mapped to: <em>agent color fading up velocity</em></p>
+    </div>
+    
+    </main>
+    <script>
+        var sketch = function(p) {
+            var agents = [];
+            var agentCount = 4000;
+            var noiseScale = 200;
+            var noiseStrength = 15;
+            var overlayAlpha = 10;
+            var agentAlpha = 90;
+            var strokeWidth = 0.7;
+            var drawMode = 1;
+            var backgroundColor = 127; // Default background color (gray)
+
+            let socket = io('ws://127.0.0.1:5500', {
+                transports: ["websocket"],
+                pingInterval: 30000,
+                pingTimeout: 10000
+            });
+
+            p.setup = function() {
+                p.createCanvas(p.windowWidth, p.windowHeight);
+
+                for (var i = 0; i < agentCount; i++) {
+                    agents[i] = new Agent(p);
+                }
+
+                // Set up WebSocket listener for real-time data
+                socket.on('data_array', data => {
+                    let string_obj = "";
+                    for (let i = 0; i < data.length; i++) {
+                        if (i < data.length - 1) {
+                            string_obj += data[i] + ",";
+                        } else {
+                            string_obj += data[i];
+                        }
+                    }
+                    console.log(string_obj);
+
+                    let airQualityData = JSON.parse(string_obj);
+                    updateParameters(airQualityData);
+                    updateLegend(airQualityData);
+                });
+            };
+
+            p.draw = function() {
+                p.fill(backgroundColor, overlayAlpha);
+                p.noStroke();
+                p.rect(0, 0, p.width, p.height);
+
+                // Draw agents
+                p.stroke(0, agentAlpha);
+                for (var i = 0; i < agentCount; i++) {
+                    if (drawMode == 1) agents[i].update1(noiseScale, noiseStrength, strokeWidth);
+                    else agents[i].update2(noiseScale, noiseStrength, strokeWidth);
+                }
+            };
+
+            p.keyReleased = function() {
+                if (p.key == 's' || p.key == 'S') p.saveCanvas(gd.timestamp(), 'png');
+                if (p.key == '1') drawMode = 1;
+                if (p.key == '2') drawMode = 2;
+                if (p.key == ' ') {
+                    var newNoiseSeed = p.floor(p.random(10000));
+                    p.noiseSeed(newNoiseSeed);
+                }
+                if (p.keyCode == p.DELETE || p.keyCode == p.BACKSPACE) p.background(255);
+            };
+
+            function updateParameters(data) {
+                agentCount = Math.floor(data.pm003_count * 10);
+                agentAlpha = p.map(data.pm01 * 10, 0, 50, 50, 255);
+                noiseScale = p.map(data.pm02 * 100, 0, 50, 100, 300);
+                noiseStrength = p.map(data.pm10 * 5, 0, 50, 5, 30);
+
+                let baseColor = p.color(0, 0, 255);
+                let targetColor = p.color(255, 255, 255);
+                let fillColor = p.lerpColor(baseColor, targetColor, 1 - data.boot * 5);
+                p.stroke(fillColor);
+
+                // Update background color based on light data
+                backgroundColor = p.map(data.light, 100, 800, 150, 255);
+
+                agents = [];
+                for (var i = 0; i < agentCount; i++) {
+                    agents.push(new Agent(p));
+                }
+            }
+
+            function updateLegend(data) {
+                document.getElementById('pm003_count').textContent = data.pm003_count;
+                document.getElementById('pm01').textContent = data.pm01;
+                document.getElementById('pm02').textContent = data.pm02;
+                document.getElementById('pm10').textContent = data.pm10;
+                document.getElementById('light').textContent = data.light;
+                document.getElementById('boot').textContent = data.boot;
+            }
+        };
+
+        var myp5 = new p5(sketch);
+
+        class Agent {
+            constructor(p) {
+                this.p = p;
+                this.vector = new p5.Vector(p.random(p.width), p.random(p.height));
+                this.angle = p.random(p.TWO_PI);
+            }
+
+            update1(noiseScale, noiseStrength, strokeWidth) {
+                var angle = this.p.noise(this.vector.x / noiseScale, this.vector.y / noiseScale) * noiseStrength;
+                this.vector.x += this.p.cos(angle);
+                this.vector.y += this.p.sin(angle);
+
+                this.p.strokeWeight(strokeWidth);
+                this.p.point(this.vector.x, this.vector.y);
+            }
+
+            update2(noiseScale, noiseStrength, strokeWidth) {
+                var angle = this.p.noise(this.vector.x / noiseScale, this.vector.y / noiseScale) * noiseStrength;
+                this.vector.x += this.p.cos(angle);
+                this.vector.y += this.p.sin(angle);
+
+                this.p.strokeWeight(strokeWidth);
+                this.p.line(this.vector.x, this.vector.y, this.vector.x + this.p.cos(angle) * strokeWidth, this.vector.y + this.p.sin(angle) * strokeWidth);
+            }
+        }
+    </script>
+</body>
+</html>

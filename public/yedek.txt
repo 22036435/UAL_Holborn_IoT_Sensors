@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--<script type="text/javascript" src="/ruxitagentjs_ICANQVfqru_10289240325103055.js" data-dtconfig="rid=RID_763109617|rpid=180865338|domain=arts.ac.uk|reportUrl=/rb_bf85966vay|app=8f8e828b83196860|featureHash=ICANQVfqru|msl=153600|srsr=20000|rdnt=1|uxrgce=1|bp=3|cuc=oje663qx|srms=2,1,0,0%2Ftextarea%2Cinput%2Cselect%2Coption;0%2Fdatalist;0%2Fform%20button;0%2F%5Bdata-dtrum-input%5D;0%2F.data-dtrum-input;1%2F%5Edata%28%28%5C-.%2B%24%29%7C%24%29|mel=100000|dpvc=1|ssv=4|lastModification=1714656680976|tp=500,50,0|agentUri=/ruxitagentjs_ICANQVfqru_10289240325103055.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/addons/p5.sound.min.js"></script>
+    <title>p5 Data Visualization Example</title>
+</head>
+<body>
+    <main>
+
+    </main>
+    <script>
+    let particles = [];
+let socket = io('ws://127.0.0.1:5500', {
+    transports: ["websocket"],
+    pingInterval: 30000,
+    pingTimeout: 10000
+});
+let lastDataTimestamp = Date.now();
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+
+    // Set up WebSocket listener for real-time data
+    socket.on('data_array', data => {
+        let string_obj = "";
+
+        for (let i = 0; i < data.length; i++) {
+            if (i < data.length - 1) {
+                string_obj += data[i] + ",";
+            } else {
+                string_obj += data[i];
+            }
+        }
+        console.log(string_obj);
+
+        let airQualityData = JSON.parse(string_obj);
+        lastDataTimestamp = Date.now(); // Update the timestamp when new data arrives
+        updateParticles(airQualityData); // Update particle properties based on new data
+    });
+
+    // Initially create a certain number of particles
+    for (let i = 0; i < 200; i++) {
+        particles.push(new Particle());
+    }
+}
+
+function draw() {
+    background(220);
+    for (let particle of particles) {
+        particle.flock(particles);
+        particle.update();
+        particle.edges();
+        particle.show();
+    }
+}
+
+class Particle {
+    constructor() {
+        this.position = createVector(random(width), random(height));
+        this.velocity = p5.Vector.random2D();
+        this.velocity.setMag(random(2, 4));
+        this.acceleration = createVector();
+        this.size = random(5, 10);  // Default size of the particle
+        this.baseColor = color(0, 0, 255); // Base color (blue)
+        this.targetColor = color(255, 255, 255); // Target color (white)
+        this.color = this.baseColor;
+        this.maxForce = 0.05; // Maximum steering force
+        this.maxSpeed = 4; // Maximum speed
+        this.fadeFactor = 0; // Factor to control fading
+    }
+
+    edges() {
+        if (this.position.x > width) this.position.x = 0;
+        if (this.position.x < 0) this.position.x = width;
+        if (this.position.y > height) this.position.y = 0;
+        if (this.position.y < 0) this.position.y = height;
+    }
+
+    align(boids) {
+        let perceptionRadius = 50;
+        let steering = createVector();
+        let total = 0;
+        for (let other of boids) {
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            if (other !== this && d < perceptionRadius) {
+                steering.add(other.velocity);
+                total++;
+            }
+        }
+        if (total > 0) {
+            steering.div(total);
+            steering.setMag(this.maxSpeed);
+            steering.sub(this.velocity);
+            steering.limit(this.maxForce);
+        }
+        return steering;
+    }
+
+    cohesion(boids) {
+        let perceptionRadius = 50;
+        let steering = createVector();
+        let total = 0;
+        for (let other of boids) {
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            if (other !== this && d < perceptionRadius) {
+                steering.add(other.position);
+                total++;
+            }
+        }
+        if (total > 0) {
+            steering.div(total);
+            steering.sub(this.position);
+            steering.setMag(this.maxSpeed);
+            steering.sub(this.velocity);
+            steering.limit(this.maxForce);
+        }
+        return steering;
+    }
+
+    separation(boids) {
+        let perceptionRadius = 25;
+        let steering = createVector();
+        let total = 0;
+        for (let other of boids) {
+            let d = dist(this.position.x, this.position.y, other.position.x, other.position.y);
+            if (other !== this && d < perceptionRadius) {
+                let diff = p5.Vector.sub(this.position, other.position);
+                diff.div(d);
+                steering.add(diff);
+                total++;
+            }
+        }
+        if (total > 0) {
+            steering.div(total);
+            steering.setMag(this.maxSpeed);
+            steering.sub(this.velocity);
+            steering.limit(this.maxForce);
+        }
+        return steering;
+    }
+
+    flock(boids) {
+        let alignment = this.align(boids);
+        let cohesion = this.cohesion(boids);
+        let separation = this.separation(boids);
+        this.acceleration.add(alignment);
+        this.acceleration.add(cohesion);
+        this.acceleration.add(separation);
+    }
+
+    update() {
+        this.position.add(this.velocity);
+        this.velocity.add(this.acceleration);
+        this.velocity.limit(this.maxSpeed);
+        this.acceleration.mult(0);
+
+        // Calculate the time elapsed since the last data update
+        let elapsedTime = Date.now() - lastDataTimestamp;
+
+        // Update the fade factor based on elapsed time (slower increment)
+        this.fadeFactor = constrain(elapsedTime / 60000, 0, 1); // Slow down the fade out process over 15 seconds
+
+        // Interpolate the color based on the fade factor
+        this.color = lerpColor(this.baseColor, this.targetColor, this.fadeFactor);
+    }
+
+    show() {
+        strokeWeight(this.size);
+        stroke(this.color);
+        point(this.position.x, this.position.y);
+    }
+
+    updateProperties(data, index, totalParticles) {
+        if (index < totalParticles / 3) {
+            this.size = map(data.pm01, 0, 50, 5, 15); // Adjust size based on pm01 for the first third
+        } else if (index < 2 * totalParticles / 3) {
+            this.size = map(data.pm02, 0, 50, 5, 15); // Adjust size based on pm02 for the second third
+        } else {
+            this.size = map(data.pm10, 0, 50, 5, 15); // Adjust size based on pm10 for the remaining third
+        }
+        this.baseColor = lerpColor(color(0, 0, 255), color(255, 255, 255), 1 - data.boot / 5);  // Color fades from blue to white based on boot
+        this.targetColor = color(255, 255, 255); // Target color is white
+        this.fadeFactor = 0; // Reset fade factor upon new data
+    }
+}
+
+function updateParticles(data) {
+    let particleCount = Math.floor(data.pm003_count / 10);
+    particles = []; // Clear current particles
+
+    for (let i = 0; i < particleCount; i++) {
+        let particle = new Particle();
+        particle.updateProperties(data, i, particleCount);
+        particles.push(particle);
+    }
+}
+
+
+
+    </script>
+    
+</body>
+</html>

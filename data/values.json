@@ -1,0 +1,13 @@
+{"values":[
+    {"firmware":"9.5.2","wifi":-62,"ssid":"UAL-IoT","light":2029,"hwVersion":8,"rco2":2385,"atmp":23.04,"rhum":41.96,"tvoc_index":99,"nox_index":1,"pm003_count":450,"pm01":1,"pm02":2,"pm10":2,"boot":8,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-60,"ssid":"UAL-IoT","light":2073,"hwVersion":8,"rco2":2397,"atmp":23.05,"rhum":42.63,"tvoc_index":8,"nox_index":1,"pm003_count":355,"pm01":2,"pm02":2,"pm10":2,"boot":2,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-61,"ssid":"UAL-IoT","light":2087,"hwVersion":8,"rco2":2418,"atmp":23.04,"rhum":42.4,"tvoc_index":95,"nox_index":1,"pm003_count":533,"pm01":1,"pm02":3,"pm10":3,"boot":3,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-62,"ssid":"UAL-IoT","light":2059,"hwVersion":8,"rco2":2392,"atmp":23.05,"rhum":41.92,"tvoc_index":103,"nox_index":1,"pm003_count":489,"pm01":1,"pm02":2,"pm10":2,"boot":4,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-61,"ssid":"UAL-IoT","light":2047,"hwVersion":8,"rco2":2384,"atmp":23.05,"rhum":42.05,"tvoc_index":111,"nox_index":1,"pm003_count":396,"pm01":1,"pm02":1,"pm10":1,"boot":5,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-61,"ssid":"UAL-IoT","light":2066,"hwVersion":8,"rco2":2347,"atmp":23.03,"rhum":41.66,"tvoc_index":102,"nox_index":1,"pm003_count":409,"pm01":0,"pm02":1,"pm10":1,"boot":6,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-61,"ssid":"UAL-IoT","light":2096,"hwVersion":8,"rco2":2344,"atmp":23,"rhum":42.24,"tvoc_index":111,"nox_index":1,"pm003_count":288,"pm01":0,"pm02":1,"pm10":1,"boot":7,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-61,"ssid":"UAL-IoT","light":2103,"hwVersion":8,"rco2":2344,"atmp":22.98,"rhum":41.85,"tvoc_index":101,"nox_index":1,"pm003_count":429,"pm01":1,"pm02":2,"pm10":2,"boot":8,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-60,"ssid":"UAL-IoT","light":2079,"hwVersion":8,"rco2":2371,"atmp":22.95,"rhum":42.21,"tvoc_index":100,"nox_index":1,"pm003_count":450,"pm01":1,"pm02":2,"pm10":2,"boot":9,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-60,"ssid":"UAL-IoT","light":2079,"hwVersion":8,"rco2":2371,"atmp":22.95,"rhum":42.21,"tvoc_index":100,"nox_index":1,"pm003_count":450,"pm01":1,"pm02":2,"pm10":2,"boot":9,"wdog":1,"serial":"0cb815082660"},
+    {"firmware":"9.5.2","wifi":-60,"ssid":"UAL-IoT","light":2079,"hwVersion":8,"rco2":2371,"atmp":22.95,"rhum":42.21,"tvoc_index":100,"nox_index":1,"pm003_count":450,"pm01":1,"pm02":2,"pm10":2,"boot":9,"wdog":1,"serial":"0cb815082660"}
+]}
